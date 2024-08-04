@@ -1,21 +1,27 @@
 from pytubefix import YouTube 
+import os
 
-yt = YouTube("https://www.youtube.com/watch?v=H09PmP5tsy8")
+yt = YouTube("https://www.youtube.com/watch?v=z1dzByPXd3U")
 
-# mp4_streams = yt.streams.filter(file_extension='mp4', progressive=True)
-mp4_streams = yt.streams.filter(file_extension='mp4', adaptive=True, only_audio = True)
+# create seperate streams for audio and video
+vid_streams = yt.streams.filter(file_extension='mp4', adaptive=True, only_video = True)
+aud_streams = yt.streams.filter(file_extension='mp4', adaptive=True, only_audio = True)
 
-for stream in mp4_streams.order_by('resolution'):
-    print(stream)
 
-if mp4_streams:
-    # the get highest resolution function doesn't work for some reason so have to do it manually
-    # d_video = mp4_streams.get_highest_resolution()
-    # print("using the get highest resolution function", d_video)
-    d_video = max(mp4_streams, key=lambda s: int(s.resolution[:-1]) if s.resolution else 0)
-    # d_video = mp4_streams.order_by('resolution').last()
-    print("using the max function",d_video)
+if vid_streams:
+    vid = vid_streams.order_by("resolution").last()
+    print("using the get highest resolution function", vid)
+    video_path = vid.download(output_path="D:\Coding\mini_projects\musicRemover\original", filename = "vid.mp4")
+    print(video_path)
     
-    d_video.download(output_path="D:\Coding\mini_projects\musicRemover\original", filename = yt.title)
-else:
-    print("No suitable streams found")
+if aud_streams:
+    aud = aud_streams.order_by("abr").last()
+    print("using the highest abr rate", aud)
+    audio_path = aud.download(output_path = "D:\Coding\mini_projects\musicRemover\original", filename = "aud.mp3")
+    print(audio_path)
+    
+output_path = f"D:/Coding/mini_projects/musicRemover/original/video.mp4"
+os.system(f'ffmpeg -i {video_path} -i {audio_path} -c copy {output_path}')
+
+os.remove(audio_path)
+os.remove(video_path)
