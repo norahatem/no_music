@@ -4,6 +4,9 @@ import os
 import sys
 import subprocess
 
+# i kinda know the problem nw??
+# since the file path is hardcoded it does this 
+
 
 class vidDownloader:
     def __init__(self, url, fname) -> None:
@@ -13,7 +16,8 @@ class vidDownloader:
         # initialise the commaon conditions instead of writing them!
         self.conditions = {"file_extension": "mp4", "adaptive": True}
         # the path that the downloaded stuff will be stored in
-        self.path = "D:/Coding/mini_projects/musicRemover/original"
+        # self.path = "D:/Coding/mini_projects/musicRemover/original"
+        self.path = "./original"
         # initialising available resolutions and streams
         self._resolutions = []
         # this is the variable where we store the no-duplicate video streams, the other one vid_streams is for all of the,
@@ -69,23 +73,26 @@ class vidDownloader:
         else:
             sys.exit("Invalid resolution")
 
-    def download_vid(self) -> None:
+    def download_files(self) -> None:
         
         # this is the actual chosen video stream with the correct resolution
         video_stream = self.video_streams[self.res]
         
-        video_path = video_stream.download(
+        self.video_path = video_stream.download(
             output_path=self.path, filename=f"{self.fname}_vid.mp4"
         )
-        audio_path = self.aud_stream.download(
-            output_path=self.path, filename=f"{self.fname}_aud.mp3"
+        self.audio_path = self.aud_stream.download(
+            output_path=self.path, filename=f"{self.fname}_aud.wav"
         )
-        output_path = f"{self.path}/{self.fname}.mp4"
+        print(self.audio_path)
+        
 
+    def merge(self) -> None:
+        output_path = f"{self.path}/{self.fname}.mp4"
         # Use ffmpeg to merge and re-encode the video and audio streams
-        subprocess.run(["ffmpeg", "-i", video_path, "-i", audio_path, output_path])
+        subprocess.run(["ffmpeg", "-i", self.video_path, "-i", self.audio_path, output_path])
         # os.system(f'ffmpeg -i "{video_path}" -i "{audio_path}" "{output_path}"')
         
         # remove mp4 and mp3 file after merging
-        os.remove(audio_path)
-        os.remove(video_path)
+        # os.remove(self.audio_path)
+        os.remove(self.video_path)
