@@ -1,6 +1,7 @@
 # import ffmpeg
 import subprocess
 import os
+import sys
 
 
 def remove_music(audio_path):
@@ -17,8 +18,10 @@ def remove_music(audio_path):
         "./original"
     ]
 
-    # Execute the command
-    subprocess.run(command)
+    try:
+        subprocess.run(command)
+    except subprocess.CalledProcessError:
+        sys.exit("Error removing music")
     
 def rename_and_reposition(old_audio_path, new_audio_path):
     # os.rename(old_audio_path, new_audio_path)
@@ -28,5 +31,7 @@ def rename_and_reposition(old_audio_path, new_audio_path):
         old_audio_path,
         new_audio_path
     ]
-    # Execute the command
-    subprocess.run(command)
+    try:
+        subprocess.run(command)
+    except subprocess.CalledProcessError:
+        sys.exit("Error renaming and/or changing path")

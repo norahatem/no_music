@@ -7,7 +7,6 @@ import subprocess
 # i kinda know the problem nw??
 # since the file path is hardcoded it does this 
 
-
 class vidDownloader:
     def __init__(self, url, fname) -> None:
         # initialise the file name and the url
@@ -28,23 +27,27 @@ class vidDownloader:
     def resolutions(self) -> None:
         return self._resolutions
 
-    # function to store all available resolution plus the equivalent streams - no duplicates
-    def available_resolutions(self) -> None:
+    def validate_url(self) -> None:
         # try to open the url and exit if it is invalid
         try:
             self.yt = YouTube(self.url)
         except pytubefix.exceptions.RegexMatchError:
             sys.exit("url not valid")
-            
+
+    def check_fname(self) -> None:
         # check if the file name is empty, if so let be the title of the video
         if self.fname is None:
             self.fname = self.yt.title
-
+            
+            
+    # function to store all available resolution plus the equivalent streams - no duplicates
+    def available_resolutions(self) -> None:
         # get all video and audio streams and store them in their respective para
         # notice that this is because we use adaptive streams where video and audio are seperate
         self.vid_streams = self.yt.streams.filter(
             **self.conditions, only_video=True
         ).order_by("resolution")
+        
         self.aud_stream = (
             self.yt.streams.filter(**self.conditions, only_audio=True)
             .order_by("abr")
@@ -63,8 +66,10 @@ class vidDownloader:
         for res in self.resolutions:
             print(f"{i}. {res}")
             i += 1
-        self.res = int(input("Choose a resolution: "))
-
+        try:
+            self.res = int(input("Choose a resolution: "))
+        except ValueError:
+            sys.exit("Invalid choice")
         if 1 <= self.res < i:
             self.res -= 1
             # now self.res stores the actual resolution, eg: "144p", it is a str
@@ -72,27 +77,30 @@ class vidDownloader:
             # print(self.resolutions[self.res])
         else:
             sys.exit("Invalid resolution")
-
-    def download_files(self) -> None:
         
-        # this is the actual chosen video stream with the correct resolution
+    def download_audio(self) -> None:
+        self.audio_path = self.aud_stream.download(
+            output_path=self.path, filename=f"{self.fname}_aud.wav"
+        )
+        
+    def download_video(self) -> None:
         video_stream = self.video_streams[self.res]
         
         self.video_path = video_stream.download(
             output_path=self.path, filename=f"{self.fname}_vid.mp4"
         )
-        self.audio_path = self.aud_stream.download(
-            output_path=self.path, filename=f"{self.fname}_aud.wav"
-        )
-        print(self.audio_path)
         
-
     def merge(self) -> None:
-        output_path = f"{self.path}/{self.fname}.mp4"
+        # output_path = f"{self.path}/{self.fname}.mp4"
+        output_path = os.path.join(self.path, f"{self.fname}.mp4")
         # Use ffmpeg to merge and re-encode the video and audio streams
-        subprocess.run(["ffmpeg", "-i", self.video_path, "-i", self.audio_path, output_path])
-        # os.system(f'ffmpeg -i "{video_path}" -i "{audio_path}" "{output_path}"')
-        
-        # remove mp4 and mp3 file after merging
-        # os.remove(self.audio_path)
-        os.remove(self.video_path)
+        merge_command = ["ffmpeg", "-i", self.video_path, "-i", self.audio_path, output_path]
+        try:
+            # check=True automatically handles errors
+            subprocess.run(merge_command, check=True)
+        except subprocess.CalledProcessError:
+            sys.exit("Error merging files")
+        finally:
+            # remove mp4 and mp3 file after merging
+            os.remove(self.audio_path)
+            os.remove(self.video_path)
