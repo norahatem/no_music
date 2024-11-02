@@ -18,12 +18,13 @@ def main():
     # download both audio and video files
     downloader.download_video()
     downloader.download_audio()
-    old_path = f"./original/htdemucs/{downloader.fname}_aud/vocals.wav"
-    new_path = f"./original/{downloader.fname}_aud.wav"
+    old_path = f"./music_free/htdemucs/{downloader.fname}_aud/vocals.wav"
+    new_path = f"./music_free/{downloader.fname}_aud.wav"
     # we will have a step in here where we will get the only vocals mp3/war and that is the one to be merged
     remove_music(new_path)
     rename_and_reposition(old_path, new_path)
     downloader.merge()
+    downloader.remove_unnecessary_files()
 
 
 def get_url_and_name():

@@ -3,9 +3,11 @@ import pytubefix
 import os
 import sys
 import subprocess
+import logging
 
 # i kinda know the problem nw??
-# since the file path is hardcoded it does this 
+# since the file path is hardcoded it does this
+
 
 class vidDownloader:
     def __init__(self, url, fname) -> None:
@@ -16,7 +18,7 @@ class vidDownloader:
         self.conditions = {"file_extension": "mp4", "adaptive": True}
         # the path that the downloaded stuff will be stored in
         # self.path = "D:/Coding/mini_projects/musicRemover/original"
-        self.path = "./original"
+        self.path = "./music_free"
         # initialising available resolutions and streams
         self._resolutions = []
         # this is the variable where we store the no-duplicate video streams, the other one vid_streams is for all of the,
@@ -38,8 +40,7 @@ class vidDownloader:
         # check if the file name is empty, if so let be the title of the video
         if self.fname is None:
             self.fname = self.yt.title
-            
-            
+
     # function to store all available resolution plus the equivalent streams - no duplicates
     def available_resolutions(self) -> None:
         # get all video and audio streams and store them in their respective para
@@ -47,7 +48,7 @@ class vidDownloader:
         self.vid_streams = self.yt.streams.filter(
             **self.conditions, only_video=True
         ).order_by("resolution")
-        
+
         self.aud_stream = (
             self.yt.streams.filter(**self.conditions, only_audio=True)
             .order_by("abr")
@@ -77,24 +78,31 @@ class vidDownloader:
             # print(self.resolutions[self.res])
         else:
             sys.exit("Invalid resolution")
-        
+
     def download_audio(self) -> None:
         self.audio_path = self.aud_stream.download(
             output_path=self.path, filename=f"{self.fname}_aud.wav"
         )
-        
+
     def download_video(self) -> None:
         video_stream = self.video_streams[self.res]
-        
+
         self.video_path = video_stream.download(
             output_path=self.path, filename=f"{self.fname}_vid.mp4"
         )
-        
+
     def merge(self) -> None:
         # output_path = f"{self.path}/{self.fname}.mp4"
         output_path = os.path.join(self.path, f"{self.fname}.mp4")
         # Use ffmpeg to merge and re-encode the video and audio streams
-        merge_command = ["ffmpeg", "-i", self.video_path, "-i", self.audio_path, output_path]
+        merge_command = [
+            "ffmpeg",
+            "-i",
+            self.video_path,
+            "-i",
+            self.audio_path,
+            output_path,
+        ]
         try:
             # check=True automatically handles errors
             subprocess.run(merge_command, check=True)
@@ -104,3 +112,7 @@ class vidDownloader:
             # remove mp4 and mp3 file after merging
             os.remove(self.audio_path)
             os.remove(self.video_path)
+    def remove_unnecessary_files(self):
+        os.remove(f"./music_free/htdemucs/{self.title}_aud/vocals.wav")
+        os.remove(f"./music_free/htdemucs/{self.title}_aud/no_vocals.wav")
+        os.rmdir("./music_free/htdemucs/")
